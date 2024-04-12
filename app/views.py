@@ -1,3 +1,4 @@
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import Response, APIView
 from rest_framework import filters
@@ -39,7 +40,6 @@ from .paginations import PostPagination
 
 
 class PostListView(ListAPIView):
-    permission_classes = [IsAuthenticated]
     queryset = Post.objects.all()
     serializer_class = PostListSerializer
     pagination_class = PostPagination
@@ -57,7 +57,7 @@ class PostCreateView(CreateAPIView):
 class PostDetailView(RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Post.objects.all()
-    serializer_class = PostListSerializer
+    serializer_class = PostCreateSerializer
 
 
 class PostUpdateView(UpdateAPIView):
@@ -65,11 +65,19 @@ class PostUpdateView(UpdateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
 
+    def check_object_permissions(self, request, obj):
+        if obj.user != request.user:
+            raise PermissionDenied("У вас не прав для редактирования данного поста.")
+
 
 class PostDeleteView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Post.objects.all()
     serializer_class = PostCreateSerializer
+
+    def check_object_permissions(self, request, obj):
+        if obj.user != request.user:
+            raise PermissionDenied("У вас не прав для редактирования данного поста.")
 
 
 class LikedPostsListView(APIView):
@@ -131,6 +139,10 @@ class CommentUpdateView(UpdateAPIView):
     def get_object(self):
         return Comment.objects.get(pk=self.kwargs['pk'])
 
+    # def check_object_permissions(self, request, obj):
+    #     if obj.author != request.user:
+    #         raise PermissionDenied("У вас не прав для редактирования данного комментария.")
+
 
 class CommentDeleteView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
@@ -165,6 +177,13 @@ class FavoriteUpdateView(UpdateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Favorite.objects.all()
     serializer_class = FavoriteCreateSerializer
+
+    def get_object(self):
+        return Favorite.objects.get(pk=self.kwargs['pk'])
+
+    # def check_object_permissions(self, request, obj):
+    #     if obj.user != request.user:
+    #         raise PermissionDenied("У вас не прав для редактирования .")
 
 
 class FavoriteDeleteView(DestroyAPIView):
@@ -204,6 +223,10 @@ class FavoriteCollectionUpdateView(UpdateAPIView):
         user = self.request.user
         return FavoriteCollection.objects.filter(user=user)
 
+    def check_object_permissions(self, request, obj):
+        if obj.user != request.user:
+            raise PermissionDenied("У вас не прав для редактирования.")
+
 
 class FavoriteCollectionDeleteView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
@@ -224,6 +247,10 @@ class SubscriptionListView(ListAPIView):
     search_fields = ['target_user', ]
     ordering_fields = ['created_at', ]
 
+    def get_queryset(self):
+        user = self.request.user
+        return Subscription.objects.filter(user=user)
+
 
 class SubscriptionCreateView(CreateAPIView):
     permission_classes = [IsAuthenticated]
@@ -235,6 +262,10 @@ class SubscriptionDeleteView(DestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionCreateSerializers
+
+    def check_object_permissions(self, request, obj):
+        if obj.user != request.user:
+            raise PermissionDenied("У вас не прав для редактирования.")
 
 
 class NewsFeedView(ListAPIView):

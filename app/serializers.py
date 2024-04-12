@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from .models import Comment, Like, FavoriteCollection, Favorite, Subscription, Post
+from .models import Comment, Like, FavoriteCollection, Favorite, Subscription, Post, File
+
+
+class FileListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = File
+        fields = '__all__'
 
 
 class LikeListSerializer(serializers.ModelSerializer):
@@ -20,10 +26,11 @@ class LikeCreateSerializer(serializers.ModelSerializer):
 
 class PostListSerializer(serializers.ModelSerializer):
     user = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    files = FileListSerializer(many=True)
 
     class Meta:
         model = Post
-        fields = ('user', 'files', 'description', 'created_at')
+        fields = ('user', 'files')
 
 
 class PostCreateSerializer(serializers.ModelSerializer):
@@ -31,7 +38,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ('user', 'files', 'description')
+        fields = ('id', 'user', 'files', 'description', 'created_at')
 
 
 class CommentListSerializer(serializers.ModelSerializer):
